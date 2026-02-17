@@ -8,119 +8,95 @@ Dans le secteur technologique en évolution rapide de l'Intelligence Artificiell
 
 Le projet résout trois problématiques critiques :
 
-1.  **Fragmentation de l'Information** : Centraliser des sources dispersées (Substack, Beehiiv, Blogs) en un point d'accès unique.
-2.  **Surcharge Cognitive** : Offrir une interface épurée et premium qui privilégie la lisibilité et l'accès rapide aux résumés ("Insights").
-3.  **Obsolescence Rapide** : Mettre à jour les données en temps réel grâce à des pipelines de scraping automatisés pour ne manquer aucune avancée majeure.
+1. **Fragmentation de l'Information** : Centraliser des sources dispersées (Substack, Beehiiv, Blogs) en un point d'accès unique.
+2. **Surcharge Cognitive** : Offrir une interface épurée et premium qui privilégie la lisibilité et l'accès rapide aux résumés ("Insights").
+3. **Obsolescence Rapide** : Mettre à jour les données en temps réel grâce à des pipelines de scraping automatisés pour ne manquer aucune avancée majeure.
 
 ---
 
 ## 💻 Stack des Langages de Programmation
 
-*   **Python** : Utilisé pour le moteur de scraping, l'extraction de données et le nettoyage des flux (BeautifulSoup, Playwright, Requests).
-*   **TypeScript / JavaScript** : Choisi pour développer une interface utilisateur moderne avec **Next.js**, garantissant une application web réactive et typée.
-*   **Shell (Bash)** : Indispensable pour l'orchestration des tâches et l'automatisation du pipeline de synchronisation (`run_sync.sh`).
+* **Python** : Utilisé pour le moteur de scraping, l'extraction de données et le nettoyage des flux (BeautifulSoup, Playwright, Requests).
+* **TypeScript / JavaScript** : Choisi pour développer une interface utilisateur moderne avec **Next.js**, garantissant une application web réactive et typée.
+* **YAML** : Utilisé pour la configuration de l'automatisation via **GitHub Actions**.
 
 ## 🛠 Stack Logicielle (Environnement & Outils)
 
-*   **Framework Frontend** : **Next.js 15+** associé à **Tailwind CSS v4** et **Shadcn UI** pour créer un Dashboard professionnel, fluide et animé.
-*   **Moteur de Scraping** : **Playwright** & **BeautifulSoup4** pour naviguer et extraire les données des plateformes modernes (Substack, Beehiiv).
-*   **Design System** : Utilisation de composants premium (Glassmorphism, Marquee infini, Cartes interactives) inspirés par **21st.dev**.
-*   **Gestion de Données** : Stockage léger en JSON pour une portabilité maximale et un déploiement instantané sans base de données lourde.
-*   **Environnement de Travail** : **VS Code** comme éditeur principal et **Git/GitHub** pour la gestion du code source.
+* **Framework Frontend** : **Next.js 15+** associé à **Tailwind CSS v4** et **Shadcn UI** pour créer un Dashboard professionnel, fluide et animé.
+* **Moteur de Scraping** : **Playwright** & **BeautifulSoup4** pour naviguer et extraire les données des plateformes modernes (Substack, Beehiiv).
+* **Automatisation (CI/CD)** : **GitHub Actions** configuré pour un déclenchement quotidien (Cron job) à 07:00 UTC.
+* **Design System** : Utilisation de composants premium (Glassmorphism, Marquee infini, Cartes interactives) inspirés par **21st.dev**.
+* **Gestion de Données** : Stockage léger en JSON pour une portabilité maximale et un déploiement instantané.
 
 ## 🧠 Notions & Concepts Clés
 
 La réalisation de ce projet fait intervenir des concepts avancés en ingénierie web et automatisation :
 
-1.  **Scraping Éthique & Robuste** : Extraction ciblée de métadonnées (titres, liens, dates) en respectant les structures HTML complexes des plateformes de newsletters.
-2.  **Modern UI/UX** :
-    *   **Glassmorphism** : Effets de transparence et de flou pour une esthétique moderne.
-    *   **Micro-interactions** : Animations fluides au survol et chargements dynamiques.
-    *   **Dark Mode** : Support natif thème clair/sombre via Tailwind.
-3.  **Pipeline d'Intégration Continue** : Un script unique (`run_sync.sh`) orchestre l'environnement virtuel Python, l'exécution du scraper et le déploiement des données vers le frontend.
-4.  **Architecture Component-Based** : Structure modulaire avec des composants réutilisables (Hero, Header, ArticleCard) pour une maintenabilité optimale.
+1. **Scraping Éthique & Robuste** : Extraction ciblée de métadonnées en respectant les structures HTML complexes.
+2. **Veille Automatisée (Cron Job)** : Déploiement d'un workflow GitHub Actions qui remplace les services payants comme Modal pour une exécution 100% gratuite.
+3. **Modern UI/UX** :
+    * **Glassmorphism** : Effets de transparence et de flou.
+    * **Micro-interactions** : Animations fluides au survol.
+4. **Pipeline d'Intégration Continue** : Synchronisation automatique des données récupérées vers le dossier `public/` pour un rafraîchissement immédiat du site.
 
 ## 📂 Architecture Dossier Complète
 
 ```text
 scraper/ (Pulse.AI)
 │
+├── .github/workflows/              # Automatisation Cloud
+│   └── daily_sync.yml              # Workflow GitHub Actions (Sync à 07h00)
+│
 ├── tools/                          # Moteur d'Extraction (Backend Logic)
 │   ├── scraper.py                  # Script principal de scraping (BeautifulSoup)
-│   ├── verify_link_playwright.py   # Validation des URLs via headless browser
-│   └── inspect_source.py           # Utilitaire de débogage HTML
+│   └── ...
 │
 ├── src/                            # Interface Utilisateur (Frontend Next.js)
-│   ├── app/                        # Routing Next.js (App Router)
-│   │   ├── page.tsx                # Dashboard principal (Hero + Grille)
-│   │   ├── layout.tsx              # Structure globale et polices
-│   │   └── globals.css             # Styles Tailwind & Animations
-│   ├── components/                 # Composants visuels
-│   │   ├── ui/                     # Bibliothèque UI (Boutons, Cards, Header)
-│   │   │   ├── hero-1.tsx          # Section Hero avec effets premium
-│   │   │   ├── article-card.tsx    # Carte d'affichage des news
-│   │   │   └── header-1.tsx        # Navigation responsive
-│   │   └── lib/                    # Utilitaires (cn, formatters)
+│   ├── app/                        # Routing & Styles
+│   ├── components/                 # Composants visuels premium
+│   └── ...
 │
 ├── public/                         # Ressources Statiques
-│   └── articles.json               # Base de données JSON générée par le scraper
+│   └── articles.json               # Flux d'actualités (Mis à jour par l'IA)
 │
-├── run_sync.sh                     # Pipeline d'automatisation (Sync Script)
-├── requirements.txt                # Dépendances Python
-├── package.json                    # Dépendances Node.js/Next.js
-├── tailwind.config.ts              # Configuration du design system
-└── README.md                       # Documentation du projet
+├── run_sync.sh                     # Script de synchronisation locale
+├── requirements.txt                # Dépendances Python (Playwright, BS4)
+├── package.json                    # Dépendances Node.js
+└── README.md                       # Vision SaaS et Documentation
 ```
 
 ---
 
 ## 🚀 Comment reproduire le travail
 
-Pour déployer l'application et lancer votre propre veille, suivez les étapes ci-dessous :
-
 ### 1️⃣ Prérequis
 
-*   **Node.js** (v18+) et **npm** installés.
-*   **Python 3.9+** installé.
+* **Node.js** (v18+) et **Python 3.9+**.
+* Un compte **GitHub** pour l'automatisation.
 
-### 2️⃣ Installation des dépendances
-
-Installez les librairies nécessaires pour le frontend et le backend :
+### 2️⃣ Installation & Test Local
 
 ```bash
-# Frontend
+# Installation Frontend
 npm install
 
-# Backend (création venv recommandée)
-python3 -m venv venv
-source venv/bin/activate
+# Installation Backend
 pip install -r requirements.txt
-playwright install  # Si nécessaire pour le moteur web
-```
+playwright install chromium
 
-### 3️⃣ Synchronisation des Données (Scraping)
-
-Lancez le script d'automatisation pour récupérer les dernières actualités. Ce script va scraper les sources configurées et mettre à jour le fichier `public/articles.json`.
-
-```bash
+# Lancement manuel du sync
 ./run_sync.sh
-```
 
-### 4️⃣ Lancement du Dashboard
-
-Démarrez le serveur de développement Next.js pour visualiser l'interface :
-
-```bash
+# Lancement du Dashboard
 npm run dev
 ```
 
-### 5️⃣ Accès au service
+### 3️⃣ Mise en place de l'Automatisation (GitHub Actions)
 
-Une fois lancé, ouvrez votre navigateur :
+Le projet est déjà configuré pour tourner chaque matin à **07:00 UTC**. Pour que cela fonctionne sur votre propre fork/repo :
 
-| Service | Interface | URL |
-| --- | --- | --- |
-| 📊 **Dashboard Pulse.AI** | Interface Web | [http://localhost:3000](http://localhost:3000) |
+1. Assurez-vous que les **"Actions"** sont activées dans les paramètres de votre repo.
+2. Le workflow `daily_sync.yml` s'occupera d'installer Playwright, de scraper les news et de push le fichier `articles.json` automatiquement.
 
 ---
 
@@ -133,7 +109,7 @@ Une fois lancé, ouvrez votre navigateur :
 
 <em>Élève Ingénieur Statisticien Économiste en 4e année</em>
 
-Passionné par l'IA/ML Engineering, la Data Science et le développement de solutions SaaS innovantes pour répondre à des problématiques métier complexes.
+Passionné par l'IA/ML Engineering, la Data Science et le développement de solutions SaaS innovantes.
 </td>
 </tr>
 </table>
