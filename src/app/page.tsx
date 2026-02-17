@@ -1,65 +1,172 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Header } from "@/components/ui/header-1";
+import { HeroSection, SourcesSection } from "@/components/ui/hero-1";
+import { Button } from "@/components/ui/button";
+import { BookmarkIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Article {
+  id: string;
+  title: string;
+  source: string;
+  link: string;
+  summary?: string;
+  timestamp?: string;
+}
 
 export default function Home() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'latest' | 'saved'>('latest');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('savedArticles');
+    if (saved) setSavedIds(JSON.parse(saved));
+
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/articles.json');
+      if (res.ok) {
+        const data = await res.json();
+        setArticles(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch articles:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSave = (id: string) => {
+    const newSaved = savedIds.includes(id)
+      ? savedIds.filter(sid => sid !== id)
+      : [...savedIds, id];
+
+    setSavedIds(newSaved);
+    localStorage.setItem('savedArticles', JSON.stringify(newSaved));
+  };
+
+  const displayedArticles = view === 'latest'
+    ? articles
+    : articles.filter(a => savedIds.includes(a.id));
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary/10">
+      <Header />
+
+      <main className="flex-grow">
+        <HeroSection />
+
+        <div id="articles-grid" className="mx-auto max-w-5xl px-4 py-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-full border w-fit">
+              <Button
+                variant={view === 'latest' ? 'secondary' : 'ghost'}
+                className="rounded-full px-6 transition-all"
+                onClick={() => setView('latest')}
+              >
+                Flux d'actualités
+              </Button>
+              <Button
+                variant={view === 'saved' ? 'secondary' : 'ghost'}
+                className="rounded-full px-6 transition-all"
+                onClick={() => setView('saved')}
+              >
+                Enregistrés ({savedIds.length})
+              </Button>
+            </div>
+
+            <Button variant="outline" size="sm" className="rounded-full gap-2" onClick={fetchArticles} disabled={loading}>
+              <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
+              Actualiser
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-64 rounded-2xl bg-muted/50 animate-pulse border" />
+              ))}
+            </div>
+          ) : displayedArticles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayedArticles.map((article) => (
+                <div
+                  key={article.id}
+                  className="group relative flex flex-col gap-4 rounded-2xl border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:-translate-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                      {article.source}
+                    </span>
+                    <button
+                      onClick={() => toggleSave(article.id)}
+                      className={cn(
+                        "rounded-full p-2 transition-colors hover:bg-muted",
+                        savedIds.includes(article.id) ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      <BookmarkIcon className={cn("size-4", savedIds.includes(article.id) && "fill-current")} />
+                    </button>
+                  </div>
+
+                  <h3 className="text-xl font-semibold leading-tight group-hover:text-primary transition-colors">
+                    {article.title}
+                  </h3>
+
+                  <p className="text-sm text-muted-foreground line-clamp-3 flex-grow">
+                    {article.summary || "Aucun résumé disponible pour cet article."}
+                  </p>
+
+                  <div className="mt-auto pt-4 flex items-center justify-between border-t">
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
+                    >
+                      Lire l'article <ExternalLinkIcon className="size-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="rounded-full bg-muted p-6 mb-4">
+                <BookmarkIcon className="size-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold">Aucun article trouvé</h3>
+              <p className="text-muted-foreground max-w-xs mx-auto mt-2">
+                {view === 'saved'
+                  ? "Vous n'avez pas encore d'articles enregistrés."
+                  : "Le flux est vide pour le moment. Revenez plus tard !"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <SourcesSection />
+      </main>
+
+      <footer className="border-t py-12 bg-muted/30">
+        <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="size-8 bg-primary rounded-lg" />
+            <span className="font-bold tracking-tight text-xl text-primary">Pulse.AI</span>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            © {new Date().getFullYear()} Pulse.AI — Veille Stratégique IA.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
   );
 }
