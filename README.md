@@ -1,5 +1,7 @@
 # Pulse.AI : Votre Boussole dans l'Océan de l'IA (SaaS)
 
+> **Accédez à la plateforme en direct :** [https://scraper-chi-tan.vercel.app/](https://scraper-chi-tan.vercel.app/)
+
 **Pulse.AI** est votre plateforme de veille stratégique automatisée proposée sous forme de Dashboard interactif. Accessible directement via un navigateur, cette solution clé en main transforme la surveillance de l'écosystème IA en une expérience fluide, centralisant les meilleures sources d'information sans aucun effort manuel de votre part.
 
 ## 🎯 Objectif du Projet & Problématique Métier Réelle
@@ -39,30 +41,59 @@ La réalisation de ce projet fait intervenir des concepts avancés en ingénieri
     * **Micro-interactions** : Animations fluides au survol.
 4. **Pipeline d'Intégration Continue** : Synchronisation automatique des données récupérées vers le dossier `public/` pour un rafraîchissement immédiat du site.
 
-## 📂 Architecture Dossier Complète
+---
+
+## 📂 Architecture Détaillée du Projet
+
+Une structure pensée pour la scalabilité, séparant clairement la logique d'extraction de l'interface utilisateur.
+
+### 🤖 Backend & Automation (Extraction)
 
 ```text
-scraper/ (Pulse.AI)
+├── .github/workflows/
+│   └── daily_sync.yml          # Chef d'orchestre : Automatise le scraping chaque jour
 │
-├── .github/workflows/              # Automatisation Cloud
-│   └── daily_sync.yml              # Workflow GitHub Actions (Sync à 07h00)
+├── tools/                      # Moteur d'Intelligence
+│   ├── scraper.py              # Logique cœur : Scraping Substack, Beehiiv, AI News
+│   ├── verify_link_playwright.py # Validation d'URLs via Headless Browser
+│   └── inspect_source.py       # Utilitaire de diagnostic HTML
 │
-├── tools/                          # Moteur d'Extraction (Backend Logic)
-│   ├── scraper.py                  # Script principal de scraping (BeautifulSoup)
-│   └── ...
+├── requirements.txt            # Portabilité : Dépendances Python (BS4, Playwright)
+└── run_sync.sh                 # Script de pont entre le Scraper et le Dashboard
+```
+
+### 🎨 Frontend & Design (Dashboard)
+
+```text
+├── src/
+│   ├── app/                    # Configuration système Next.js
+│   │   ├── layout.tsx          # Template global (Fonts, SEO, Sidebar)
+│   │   ├── page.tsx            # Point d'entrée : Assemblage du Dashboard
+│   │   └── globals.css         # Design System : Tailwind v4 + Custom Animations
+│   │
+│   ├── components/ui/          # Composants UI Atomiques & Premium
+│   │   ├── hero-1.tsx          # Section Hero immersive (Pulse effect)
+│   │   ├── header-1.tsx        # Navigation intelligente & Branding
+│   │   ├── article-card.tsx    # Affichage riche des actualités
+│   │   ├── infinite-slider.tsx # Moteur de défilement pour les sources
+│   │   └── button.tsx          # Boutons stylisés Pulse
+│   │
+│   ├── components/lib/         # Logique utilitaire
+│   │   └── utils.ts            # Fusion de classes Tailwind (clsx + tailwind-merge)
+│   │
+│   └── hooks/                  # Logique d'état réutilisable
+│       └── use-scroll.tsx      # Gestion des effets de scroll (Navbar glass)
+```
+
+### 📦 Données & Assets
+
+```text
+├── public/                     # Serveur de fichiers statiques
+│   ├── articles.json           # LA SOURCE DE VÉRITÉ : Flux d'actu mis à jour par l'IA
+│   └── (images/logos)          # Assets visuels du site
 │
-├── src/                            # Interface Utilisateur (Frontend Next.js)
-│   ├── app/                        # Routing & Styles
-│   ├── components/                 # Composants visuels premium
-│   └── ...
-│
-├── public/                         # Ressources Statiques
-│   └── articles.json               # Flux d'actualités (Mis à jour par l'IA)
-│
-├── run_sync.sh                     # Script de synchronisation locale
-├── requirements.txt                # Dépendances Python (Playwright, BS4)
-├── package.json                    # Dépendances Node.js
-└── README.md                       # Vision SaaS et Documentation
+├── package.json                # Gestionnaire de packages Node.js
+└── next.config.ts              # Optimisations et règles Next.js
 ```
 
 ---
@@ -109,7 +140,7 @@ Le projet est déjà configuré pour tourner chaque matin à **07:00 UTC**. Pour
 
 <em>Élève Ingénieur Statisticien Économiste en 4e année</em>
 
-Passionné par l'IA/ML Engineering, la Data Science et le développement de solutions SaaS innovantes.
+Passionné par l'IA/ML Engineering, la Data Science et le développement de solutions SaaS innovantes pour répondre à des problématiques métier complexes.
 </td>
 </tr>
 </table>
