@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from "@/components/ui/header-1";
 import { HeroSection, SourcesSection } from "@/components/ui/hero-1";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
+import { AuthModal } from '@/components/auth/auth-modal';
 
 interface Article {
   id: string;
@@ -21,15 +24,25 @@ export default function Home() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'latest' | 'saved'>('latest');
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('savedArticles');
-    if (saved) setSavedIds(JSON.parse(saved));
+  const supabase = createClient();
 
-    fetchArticles();
-  }, []);
+  const fetchSavedArticles = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('saved_articles')
+      .select('article_id')
+      .eq('user_id', userId);
 
-  const fetchArticles = async () => {
+    if (error) {
+      console.error("Error fetching saved articles:", error);
+    } else if (data) {
+      setSavedIds(data.map(item => item.article_id));
+    }
+  }, [supabase]);
+
+  const fetchArticles = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/articles.json');
@@ -42,15 +55,74 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const toggleSave = (id: string) => {
-    const newSaved = savedIds.includes(id)
+  useEffect(() => {
+    // Check initial session
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchSavedArticles(session.user.id);
+      }
+    };
+
+    checkUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchSavedArticles(session.user.id);
+      } else {
+        setSavedIds([]);
+      }
+    });
+
+    fetchArticles();
+
+    return () => subscription.unsubscribe();
+  }, [supabase, fetchSavedArticles, fetchArticles]);
+
+  const toggleSave = async (id: string) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    const isSaved = savedIds.includes(id);
+
+    // Optimistic update
+    const newSaved = isSaved
       ? savedIds.filter(sid => sid !== id)
       : [...savedIds, id];
-
     setSavedIds(newSaved);
-    localStorage.setItem('savedArticles', JSON.stringify(newSaved));
+
+    if (isSaved) {
+      // Delete
+      const { error } = await supabase
+        .from('saved_articles')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('article_id', id);
+
+      if (error) {
+        console.error("Error un-saving article:", error);
+        // Rollback
+        setSavedIds(savedIds);
+      }
+    } else {
+      // Insert
+      const { error } = await supabase
+        .from('saved_articles')
+        .insert({ user_id: user.id, article_id: id });
+
+      if (error) {
+        console.error("Error saving article:", error);
+        // Rollback
+        setSavedIds(savedIds);
+      }
+    }
   };
 
   const displayedArticles = view === 'latest'
@@ -72,7 +144,7 @@ export default function Home() {
                 className="rounded-full px-6 transition-all"
                 onClick={() => setView('latest')}
               >
-                Flux d'actualités
+                Flux d&apos;actualités
               </Button>
               <Button
                 variant={view === 'saved' ? 'secondary' : 'ghost'}
@@ -132,7 +204,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
                     >
-                      Lire l'article <ExternalLinkIcon className="size-3" />
+                      Lire l&apos;article <ExternalLinkIcon className="size-3" />
                     </a>
                   </div>
                 </div>
@@ -146,9 +218,16 @@ export default function Home() {
               <h3 className="text-xl font-semibold">Aucun article trouvé</h3>
               <p className="text-muted-foreground max-w-xs mx-auto mt-2">
                 {view === 'saved'
-                  ? "Vous n'avez pas encore d'articles enregistrés."
+                  ? (user
+                    ? "Vous n'avez pas encore d'articles enregistrés."
+                    : "Connectez-vous pour voir vos articles enregistrés.")
                   : "Le flux est vide pour le moment. Revenez plus tard !"}
               </p>
+              {!user && view === 'saved' && (
+                <Button onClick={() => setShowAuthModal(true)} className="mt-4 rounded-full">
+                  Se connecter
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -167,6 +246,8 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }

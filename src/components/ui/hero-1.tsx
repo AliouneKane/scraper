@@ -1,8 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { RocketIcon, ArrowRightIcon, PhoneCallIcon } from "lucide-react";
-import { LogoCloud } from "@/components/ui/logo-cloud-3";
+import { RocketIcon, ArrowRightIcon } from "lucide-react";
 
 export function HeroSection() {
     return (
@@ -58,7 +57,7 @@ export function HeroSection() {
                         "text-shadow-premium"
                     )}
                 >
-                    Pulse.AI : Votre Boussole <br /> dans l'Océan de l'IA
+                    Pulse.AI : Votre Boussole <br /> dans l&apos;Océan de l&apos;IA
                 </h1>
 
                 <p className="fade-in slide-in-from-bottom-10 mx-auto max-w-lg animate-in fill-mode-backwards text-center text-base text-foreground/80 tracking-wider delay-200 duration-500 ease-out sm:text-lg md:text-xl">

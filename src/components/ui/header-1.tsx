@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
 import { createPortal } from 'react-dom';
+import { UserMenu } from '@/components/auth/user-menu';
 
 export function Header() {
     const [open, setOpen] = React.useState(false);
@@ -36,7 +37,7 @@ export function Header() {
                     <span className="font-bold text-lg tracking-tight text-primary">Pulse.AI</span>
                 </div>
                 <div className="hidden items-center gap-2 md:flex">
-                    <Button variant="outline" onClick={() => window.location.reload()}>Sync Now</Button>
+                    <UserMenu />
                 </div>
                 <Button
                     size="icon"
@@ -65,10 +66,8 @@ export function Header() {
                         </a>
                     ))}
                 </div>
-                <div className="flex flex-col gap-2">
-                    <Button variant="outline" className="w-full bg-transparent" onClick={() => window.location.reload()}>
-                        Sync Now
-                    </Button>
+                <div className="flex flex-col gap-2 pt-2 border-t">
+                    <UserMenu />
                 </div>
             </MobileMenu>
         </header>
