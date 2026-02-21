@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from "@/components/ui/header-1";
 import { HeroSection, SourcesSection } from "@/components/ui/hero-1";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,8 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   const fetchSavedArticles = useCallback(async (userId: string) => {
     const { data, error } = await supabase
@@ -58,12 +59,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Check initial session
+    // Check initial user (getUser() validates the token server-side, unlike getSession())
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchSavedArticles(session.user.id);
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser ?? null);
+      if (currentUser) {
+        fetchSavedArticles(currentUser.id);
       }
     };
 
