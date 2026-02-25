@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Chrome, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -45,17 +45,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setLoading(false);
     };
 
-    const handleProviderLogin = async (provider: 'google') => {
-        setLoading(true);
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
-        if (error) setMessage({ type: 'error', text: error.message });
-        setLoading(false);
-    };
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,24 +58,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => handleProviderLogin('google')}
-                        disabled={loading}
-                        className="w-full gap-2 py-6 text-base font-medium"
-                    >
-                        <Chrome className="h-5 w-5" />
-                        Continuer avec Google
-                    </Button>
 
-                    <div className="relative my-2">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Ou avec votre email</span>
-                        </div>
-                    </div>
 
                     <form onSubmit={handleEmailLogin} className="grid gap-3">
                         <div className="grid gap-1">
