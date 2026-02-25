@@ -198,7 +198,7 @@ export default function Home() {
         <div id="articles-grid" className="mx-auto max-w-5xl px-4 py-12">
           <div className="flex flex-col gap-4 mb-8">
             <h2 className="text-3xl font-bold tracking-tight">
-              {view === 'latest' ? "Flux d&apos;actualités" : "Mes articles enregistrés"}
+              {view === 'latest' ? "Flux d\u2019actualités" : "Mes articles enregistrés"}
             </h2>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
