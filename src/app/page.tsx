@@ -22,6 +22,7 @@ interface Article {
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savedArticles, setSavedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'latest' | 'saved'>('latest');
   const [user, setUser] = useState<User | null>(null);
@@ -33,13 +34,24 @@ export default function Home() {
   const fetchSavedArticles = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('saved_articles')
-      .select('article_id')
-      .eq('user_id', userId);
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Error fetching saved articles:", error);
     } else if (data) {
       setSavedIds(data.map(item => item.article_id));
+      setSavedArticles(
+        data.map(item => ({
+          id: item.article_id,
+          title: item.title || "Titre inconnu",
+          link: item.link || "#",
+          source: item.source || "Source inconnue",
+          summary: item.summary || "",
+          timestamp: item.published_at || item.created_at
+        }))
+      );
     }
   }, [supabase]);
 
@@ -48,8 +60,15 @@ export default function Home() {
     try {
       const res = await fetch('/articles.json');
       if (res.ok) {
-        const data = await res.json();
-        setArticles(data);
+        const data: Article[] = await res.json();
+        // Dédupliquer par ID pour éviter les doublons à l'affichage
+        const uniqueDataMap = new Map<string, Article>();
+        data.forEach(item => {
+          if (!uniqueDataMap.has(item.id)) {
+            uniqueDataMap.set(item.id, item);
+          }
+        });
+        setArticles(Array.from(uniqueDataMap.values()));
       }
     } catch (err) {
       console.error("Failed to fetch articles:", err);
@@ -77,6 +96,7 @@ export default function Home() {
         fetchSavedArticles(session.user.id);
       } else {
         setSavedIds([]);
+        setSavedArticles([]);
       }
     });
 
@@ -85,50 +105,88 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, [supabase, fetchSavedArticles, fetchArticles]);
 
-  const toggleSave = async (id: string) => {
+  // Track which articles are currently being toggled to prevent double-clicks
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+
+  const toggleSave = async (article: Article) => {
+    const id = article.id;
     if (!user) {
       setShowAuthModal(true);
       return;
     }
 
+    // Prevent double-click: if this article is already being processed, ignore
+    if (savingIds.has(id)) return;
+
     const isSaved = savedIds.includes(id);
 
+    // Lock this article
+    setSavingIds(prev => new Set(prev).add(id));
+
     // Optimistic update
+    const previousSaved = [...savedIds];
+    const previousSavedArticles = [...savedArticles];
+
     const newSaved = isSaved
       ? savedIds.filter(sid => sid !== id)
       : [...savedIds, id];
     setSavedIds(newSaved);
 
-    if (isSaved) {
-      // Delete
-      const { error } = await supabase
-        .from('saved_articles')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('article_id', id);
+    const newSavedArticles = isSaved
+      ? savedArticles.filter(a => a.id !== id)
+      : [article, ...savedArticles];
+    setSavedArticles(newSavedArticles);
 
-      if (error) {
-        console.error("Error un-saving article:", error);
-        // Rollback
-        setSavedIds(savedIds);
-      }
-    } else {
-      // Insert
-      const { error } = await supabase
-        .from('saved_articles')
-        .insert({ user_id: user.id, article_id: id });
+    try {
+      if (isSaved) {
+        // Delete
+        const { error } = await supabase
+          .from('saved_articles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('article_id', id);
 
-      if (error) {
-        console.error("Error saving article:", error);
-        // Rollback
-        setSavedIds(savedIds);
+        if (error) {
+          console.error("Error un-saving article:", error);
+          setSavedIds(previousSaved);
+          setSavedArticles(previousSavedArticles);
+        }
+      } else {
+        // Upsert: prevents duplicate errors if somehow triggered twice
+        const { error } = await supabase
+          .from('saved_articles')
+          .upsert(
+            {
+              user_id: user.id,
+              article_id: id,
+              title: article.title,
+              link: article.link,
+              source: article.source,
+              summary: article.summary,
+              published_at: article.timestamp || null
+            },
+            { onConflict: 'user_id,article_id' }
+          );
+
+        if (error) {
+          console.error("Error saving article:", error);
+          setSavedIds(previousSaved);
+          setSavedArticles(previousSavedArticles);
+        }
       }
+    } finally {
+      // Unlock this article
+      setSavingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
   const displayedArticles = view === 'latest'
     ? articles
-    : articles.filter(a => savedIds.includes(a.id));
+    : savedArticles;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground selection:bg-primary/10">
@@ -180,10 +238,12 @@ export default function Home() {
                       {article.source}
                     </span>
                     <button
-                      onClick={() => toggleSave(article.id)}
+                      onClick={() => toggleSave(article)}
+                      disabled={savingIds.has(article.id)}
                       className={cn(
                         "rounded-full p-2 transition-colors hover:bg-muted",
-                        savedIds.includes(article.id) ? "text-primary" : "text-muted-foreground"
+                        savedIds.includes(article.id) ? "text-primary" : "text-muted-foreground",
+                        savingIds.has(article.id) && "opacity-50 cursor-not-allowed"
                       )}
                     >
                       <BookmarkIcon className={cn("size-4", savedIds.includes(article.id) && "fill-current")} />
