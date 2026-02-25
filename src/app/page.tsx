@@ -196,28 +196,58 @@ export default function Home() {
         <HeroSection />
 
         <div id="articles-grid" className="mx-auto max-w-5xl px-4 py-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-full border w-fit">
+          <div className="flex flex-col gap-4 mb-8">
+            <h2 className="text-3xl font-bold tracking-tight">
+              {view === 'latest' ? "Flux d&apos;actualités" : "Mes articles enregistrés"}
+            </h2>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-1 bg-muted/80 p-1.5 rounded-full border shadow-sm w-fit">
+                <Button
+                  variant={view === 'latest' ? 'secondary' : 'ghost'}
+                  className={cn(
+                    "rounded-full px-6 py-2 transition-all cursor-pointer font-medium",
+                    view === 'latest' && "shadow-sm bg-background"
+                  )}
+                  onClick={() => {
+                    console.log("Switching to latest");
+                    setView('latest');
+                  }}
+                >
+                  Flux récent
+                </Button>
+                <Button
+                  variant={view === 'saved' ? 'secondary' : 'ghost'}
+                  className={cn(
+                    "rounded-full px-6 py-2 transition-all cursor-pointer font-medium flex items-center gap-2",
+                    view === 'saved' && "shadow-sm bg-background"
+                  )}
+                  onClick={() => {
+                    console.log("Switching to saved");
+                    setView('saved');
+                  }}
+                >
+                  Enregistrés
+                  <span className={cn(
+                    "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold",
+                    view === 'saved' ? "bg-primary text-primary-foreground" : "bg-muted-foreground/20 text-muted-foreground"
+                  )}>
+                    {savedIds.length}
+                  </span>
+                </Button>
+              </div>
+
               <Button
-                variant={view === 'latest' ? 'secondary' : 'ghost'}
-                className="rounded-full px-6 transition-all"
-                onClick={() => setView('latest')}
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-2 cursor-pointer hover:bg-muted"
+                onClick={fetchArticles}
+                disabled={loading}
               >
-                Flux d&apos;actualités
-              </Button>
-              <Button
-                variant={view === 'saved' ? 'secondary' : 'ghost'}
-                className="rounded-full px-6 transition-all"
-                onClick={() => setView('saved')}
-              >
-                Enregistrés ({savedIds.length})
+                <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
+                Actualiser le flux
               </Button>
             </div>
-
-            <Button variant="outline" size="sm" className="rounded-full gap-2" onClick={fetchArticles} disabled={loading}>
-              <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
-              Actualiser
-            </Button>
           </div>
 
           {loading ? (
